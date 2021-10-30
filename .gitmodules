@@ -1,0 +1,3 @@
+[submodule "contrib/qulacs"]
+	path = contrib/qulacs
+	url = https://github.com/qulacs/qulacs.git
