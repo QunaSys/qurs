@@ -7,8 +7,9 @@ pub fn operate() {
 	let mut state = vec![CTYPE { re: 1., im: 0. }, CTYPE { re: 0., im: 0. }];
 	unsafe {
 		X_gate(0, state.as_mut_ptr(), 2);
+		Y_gate(0, state.as_mut_ptr(), 2);
 		Z_gate(0, state.as_mut_ptr(), 2);
-		//return [0,-1]
+		//return [-i,0]
 		dbg!(state);
 	}
 }

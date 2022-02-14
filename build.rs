@@ -4,11 +4,12 @@ use std::env;
 use std::path::PathBuf;
 
 fn main() {
+	let ops = vec!["X", "Y", "Z"];
 	cc::Build::new()
-		.files(vec![
-			"contrib/qulacs/src/csim/update_ops_named_X.c",
-			"contrib/qulacs/src/csim/update_ops_named_Z.c",
-		])
+		.files(
+			ops.iter()
+				.map(|name| format!("contrib/qulacs/src/csim/update_ops_named_{}.c", name)),
+		)
 		.compile("qulacs");
 
 	let bindings = bindgen::Builder::default()
