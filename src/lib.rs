@@ -9,7 +9,10 @@ fn test() {
 		Complex::new(0., 0.),
 		Complex::new(0., 0.),
 	];
-	sqrtx_gate(0, &mut state);
+	sqrtydag_gate(0, &mut state);
+	x_gate(0, &mut state);
+	p0_gate(0, &mut state);
+	cz_gate(0, 1, &mut state);
 	dbg!(state);
 }
 
@@ -55,6 +58,7 @@ pub fn sdag_gate(target_qubit_index: u32, state: &mut Vec<Complex<f64>>) {
 pub fn t_gate(target_qubit_index: u32, state: &mut Vec<Complex<f64>>) {
 	bindings(state, Gate::SingleGate(target_qubit_index, binding::T_gate));
 }
+
 pub fn tdag_gate(target_qubit_index: u32, state: &mut Vec<Complex<f64>>) {
 	bindings(
 		state,

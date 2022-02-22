@@ -1,22 +1,31 @@
 extern crate bindgen;
 extern crate cc;
-use std::env;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use std::{env, fs};
 
 fn main() {
-	let ops = vec!["X", "Y", "Z", "H", "CZ", "CNOT", "SWAP", "projection"];
+	let out_dir = env::var_os("OUT_DIR").unwrap();
+	println!("cargo:rerun-if-changed=build.rs");
+	let dest_dir = Path::new(&out_dir).join("qulacs");
+	let qulacs_dir = Path::new("contrib").join("qulacs");
+	let csim_dir = qulacs_dir.join("src").join("csim");
 	// let preprocess = "_USE_SIMD";
-	cc::Build::new()
-		.files(
-			ops.iter()
-				.map(|name| format!("contrib/qulacs/src/csim/update_ops_named_{}.c", name)),
-		)
-		.file("contrib/qulacs/src/csim/update_ops_named.c")
-		.file("contrib/qulacs/src/csim/constant.c")
-		.file("contrib/qulacs/src/csim/update_ops_matrix_phase_single.c")
-		// .define(preprocess, "1")
-		.compile("qulacs");
+	// mkdir $OUT_DIR/qulacs
+	let _ = fs::remove_dir_all(&dest_dir);
+	fs::create_dir_all(&dest_dir).unwrap();
 
+	let mut files = Vec::new();
+	for entry in fs::read_dir(csim_dir).unwrap() {
+		let entry = entry.unwrap();
+		let dest_file = dest_dir.join(entry.file_name());
+		fs::copy(entry.path(), &dest_file).unwrap();
+		match dest_file.extension().and_then(|o| o.to_str()) {
+			Some("c") => files.push(dest_file),
+			_ => (),
+		}
+	}
+	cc::Build::new().files(files).compile("qulacs");
+	// cc.define(preprocess, "1");
 	let bindings = bindgen::Builder::default()
 		.header("contrib/qulacs/src/csim/update_ops.h")
 		.header("contrib/qulacs/src/csim/constant.h")
