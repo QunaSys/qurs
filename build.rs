@@ -10,7 +10,6 @@ fn main() {
 	let qulacs_dir = Path::new("contrib").join("qulacs");
 	let csim_dir = qulacs_dir.join("src").join("csim");
 	// let preprocess = "_USE_SIMD";
-	// mkdir $OUT_DIR/qulacs
 	let _ = fs::remove_dir_all(&dest_dir);
 	fs::create_dir_all(&dest_dir).unwrap();
 
@@ -28,7 +27,6 @@ fn main() {
 	// cc.define(preprocess, "1");
 	let bindings = bindgen::Builder::default()
 		.header("contrib/qulacs/src/csim/update_ops.h")
-		.header("contrib/qulacs/src/csim/constant.h")
 		.parse_callbacks(Box::new(bindgen::CargoCallbacks))
 		.generate()
 		.expect("Unable to generate bindings");
