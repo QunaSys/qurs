@@ -20,9 +20,8 @@ type RotationGate =
 	unsafe extern "C" fn(target_qubit_index: u32, angle: f64, state: *mut CTYPE, dim: u64);
 
 pub fn wrap(state: &mut [Complex<f64>], gate: Gate) {
-	let mut new_state = comp_to_ctype(state);
-	let dim = new_state.len() as u64;
-	let state_ptr = new_state.as_mut_ptr();
+	let dim = state.len() as u64;
+	let state_ptr = state.as_mut_ptr() as *mut CTYPE;
 	unsafe {
 		match gate {
 			Gate::SingleGate(target_qubit_index, gate) => {
@@ -36,14 +35,4 @@ pub fn wrap(state: &mut [Complex<f64>], gate: Gate) {
 			}
 		}
 	}
-	for i in 0..dim as usize {
-		state[i] = Complex::new(new_state[i].re, new_state[i].im);
-	}
-}
-
-fn comp_to_ctype(state: &mut [Complex<f64>]) -> Vec<CTYPE> {
-	state
-		.into_iter()
-		.map(|e| CTYPE { re: e.re, im: e.im })
-		.collect::<Vec<CTYPE>>()
 }
