@@ -95,31 +95,35 @@ pub fn cnot_gate(control_qubit_index: u32, target_qubit_index: u32, state: &mut 
 	);
 }
 
-pub fn swap_gate(control_qubit_index: u32, target_qubit_index: u32, state: &mut [Complex<f64>]) {
+pub fn swap_gate(target_qubit_index_0: u32, target_qubit_index_1: u32, state: &mut [Complex<f64>]) {
 	wrap(
 		state,
-		Gate::ControlledGate(control_qubit_index, target_qubit_index, binding::SWAP_gate),
+		Gate::ControlledGate(
+			target_qubit_index_0,
+			target_qubit_index_1,
+			binding::SWAP_gate,
+		),
 	);
 }
 
-pub fn rx_gate(control_qubit_index: u32, angle: f64, state: &mut [Complex<f64>]) {
+pub fn rx_gate(target_qubit_index: u32, angle: f64, state: &mut [Complex<f64>]) {
 	wrap(
 		state,
-		Gate::RotationGate(control_qubit_index, angle, binding::RX_gate),
+		Gate::RotationGate(target_qubit_index, angle, binding::RX_gate),
 	);
 }
 
-pub fn ry_gate(control_qubit_index: u32, angle: f64, state: &mut [Complex<f64>]) {
+pub fn ry_gate(target_qubit_index: u32, angle: f64, state: &mut [Complex<f64>]) {
 	wrap(
 		state,
-		Gate::RotationGate(control_qubit_index, angle, binding::RY_gate),
+		Gate::RotationGate(target_qubit_index, angle, binding::RY_gate),
 	);
 }
 
-pub fn rz_gate(control_qubit_index: u32, angle: f64, state: &mut [Complex<f64>]) {
+pub fn rz_gate(target_qubit_index: u32, angle: f64, state: &mut [Complex<f64>]) {
 	wrap(
 		state,
-		Gate::RotationGate(control_qubit_index, angle, binding::RZ_gate),
+		Gate::RotationGate(target_qubit_index, angle, binding::RZ_gate),
 	);
 }
 

@@ -2,22 +2,10 @@ include!(concat!(env!("OUT_DIR"), "/qulacs.rs"));
 pub use num::complex::Complex;
 
 pub enum Gate {
-	SingleGate(u32, SingleGate),
-	ControlledGate(u32, u32, ControlledGate),
-	RotationGate(u32, f64, RotationGate),
+	SingleGate(u32, unsafe extern "C" fn(u32, *mut CTYPE, u64)),
+	ControlledGate(u32, u32, unsafe extern "C" fn(u32, u32, *mut CTYPE, u64)),
+	RotationGate(u32, f64, unsafe extern "C" fn(u32, f64, *mut CTYPE, u64)),
 }
-
-type SingleGate = unsafe extern "C" fn(target_qubit_index: u32, state: *mut CTYPE, dim: u64);
-
-type ControlledGate = unsafe extern "C" fn(
-	conrol_qubit_index: u32,
-	target_qubit_index: u32,
-	state: *mut CTYPE,
-	dim: u64,
-);
-
-type RotationGate =
-	unsafe extern "C" fn(target_qubit_index: u32, angle: f64, state: *mut CTYPE, dim: u64);
 
 pub fn wrap(state: &mut [Complex<f64>], gate: Gate) {
 	let dim = state.len() as u64;
