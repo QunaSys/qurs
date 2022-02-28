@@ -4,9 +4,13 @@ on:
   schedule:
     - cron: '0 0 0 * *'
   push:
+    branches:
+      - main
     paths:
       - '**/Cargo.toml'
   pull_request:
+    branches:
+      - main
 
 jobs:
   audit:

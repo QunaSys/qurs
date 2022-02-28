@@ -1,7 +1,10 @@
 on:
   pull_request:
+    branches:
+      - main
   push:
-    - main
+    branches:
+      - main
 name: check
 jobs:
   clippy_check:
