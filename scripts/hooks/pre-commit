@@ -1,0 +1,20 @@
+#!/bin/bash
+set -o pipefail
+
+HAS_ISSUES=0
+for file in $(git diff --name-only --staged); do
+	case "$file" in
+		*.rs)
+			if ! git show ":$file" | rustfmt --config-path . --check --unstable-features --skip-children -- /dev/stdin 2>/dev/null | sed -e "s:/dev/stdin:$file:"; then
+				HAS_ISSUES=1
+			fi
+		;;
+	esac
+done
+
+if [ $HAS_ISSUES -eq 0 ]; then
+    exit 0
+fi
+
+echo "Your code have some issues. Use rustfmt to fix."
+exit 1
