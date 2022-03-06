@@ -18,9 +18,8 @@ fn main() {
 		let entry = entry.unwrap();
 		let dest_file = dest_dir.join(entry.file_name());
 		fs::copy(entry.path(), &dest_file).unwrap();
-		match dest_file.extension().and_then(|o| o.to_str()) {
-			Some("c") => files.push(dest_file),
-			_ => (),
+		if let Some("c") = dest_file.extension().and_then(|o| o.to_str()) {
+			files.push(dest_file)
 		}
 	}
 	cc::Build::new().files(files).compile("qulacs");

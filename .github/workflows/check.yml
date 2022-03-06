@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
+        submodules: true
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
         with:
@@ -37,7 +37,6 @@ jobs:
         with:
           command: test
           args: --all
-          submodules: true
         env:
           CARGO_INCREMENTAL: 0
           RUSTFLAGS: "-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests"
