@@ -1,5 +1,14 @@
-include!(concat!(env!("OUT_DIR"), "/qulacs.rs"));
 pub use num::complex::Complex;
+
+#[allow(non_snake_case)]
+#[allow(non_upper_case_globals)]
+#[allow(non_camel_case_types)]
+#[allow(improper_ctypes)]
+#[allow(unused)]
+mod qulacs {
+	include!(concat!(env!("OUT_DIR"), "/qulacs.rs"));
+}
+pub use qulacs::*;
 
 pub enum Gate {
 	Single(u32, unsafe extern "C" fn(u32, *mut CTYPE, u64)),

@@ -22,7 +22,10 @@ fn main() {
 			files.push(dest_file)
 		}
 	}
-	cc::Build::new().files(files).compile("qulacs");
+	cc::Build::new()
+		.files(files)
+		.warnings(false)
+		.compile("qulacs");
 	// cc.define(preprocess, "1");
 	let bindings = bindgen::Builder::default()
 		.header("contrib/qulacs/src/csim/update_ops.h")
