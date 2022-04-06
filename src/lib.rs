@@ -1,6 +1,7 @@
 pub use num::complex::Complex;
 mod binding;
 use binding::{wrap, Gate};
+pub mod state;
 
 pub fn x_gate(target_qubit_index: u32, state: &mut [Complex<f64>]) {
 	wrap(state, Gate::Single(target_qubit_index, binding::X_gate));
