@@ -37,6 +37,6 @@ impl<T: BorrowMut<[Complex<f64>; 2]>> PureStateMut for T {}
 
 struct GpuPureState();
 
-pub trait DenseStateRef {}
+pub trait GeneralStateRef {}
 
-pub trait DenseStateMut {}
+pub trait GeneralStateMut {}
