@@ -1,6 +1,5 @@
 use num;
-use num::Complex;
-use std::borrow::{Borrow, BorrowMut};
+use num::{Complex, One, Zero};
 
 pub trait StateRef<F> {
 	// TODO: Place analyzing operations performed on both PureStateRef and
@@ -8,8 +7,8 @@ pub trait StateRef<F> {
 
 	fn len(&self) -> usize;
 
-	fn get_entropy() -> F;
-	fn get_squared_norm() -> F;
+	fn get_entropy(&self) -> F;
+	fn get_squared_norm(&self) -> F;
 
 	// panic-ing function
 	fn get_zero_probability(&self, qbit: usize) -> F;
@@ -33,55 +32,61 @@ pub trait PureStateMut<F>: PureStateRef<F> + StateMut<F> {}
 //
 // # SAFETY
 // the slice has more than 2^(len()) elements
-unsafe trait PureStateImpl<F>: AsRef<[F]> {
+unsafe trait PureStateImpl<F>: AsRef<[Complex<F>]> {
 	fn len(&self) -> usize;
 }
 
-impl StateRef<Complex<f64>> for T
+impl<T> StateRef<f64> for T
 where
-	T: PureStateImpl<Complex<f64>>,
+	T: PureStateImpl<f64>,
 {
 	fn len(&self) -> usize {
 		self.len()
 	}
 
-	fn get_entropy() -> F {
-		unimplemented!()
+	fn get_entropy(&self) -> f64 {
+		self.as_ref()
+			.iter()
+			.map(|val| {
+				let p = val.norm_sqr().max(1e-15);
+				-1.0 * p * p.ln()
+			})
+			.sum()
 	}
 
-	fn get_squared_norm() -> F {
+	fn get_squared_norm(&self) -> f64 {
 		unimplemented!()
 	}
 
 	// panic-ing function
-	fn get_zero_probability(&self, qbit: usize) -> F {
+	fn get_zero_probability(&self, _qbit: usize) -> f64 {
 		unimplemented!()
 	}
 
-	fn get_marginal_probability(&self, qbits: &[usize]) -> F {
+	fn get_marginal_probability(&self, _qbits: &[usize]) -> f64 {
 		unimplemented!()
 	}
 }
 
-impl StateMut<F> for T
+impl<T> StateMut<f64> for T
 where
-	T: PureStateImpl<Complex<f64>> + AsMut<[F]>,
+	T: PureStateImpl<f64> + AsMut<[Complex<f64>]>,
 {
 	fn set_zero_state(&mut self) {
 		unimplemented!()
 	}
-	fn normalize(&mut self, norm_square: F) {
+	fn normalize(&mut self, norm_square: f64) {
 		unimplemented!()
 	}
 }
 
-impl PureStateRef<Complex<f64>> for T where T: PureStateImpl<Complex<f64>> {}
+impl<T> PureStateRef<f64> for T where T: PureStateImpl<f64> {}
 
-impl PureStateMut<Complex<f64>> for T where T: PureStateImpl<Complex<f64>> + AsMut<[Complex<f64>]> {}
+impl<T> PureStateMut<f64> for T where T: PureStateImpl<f64> + AsMut<[Complex<f64>]> {}
 
 macro_rules! impl_array_state {
 	(@impl, $n:expr) => {
-		unsafe impl<F: num::Num> SliceImpl<F> for [F; 2usize.pow($n as u32)]
+		unsafe impl<F: num::Num> PureStateImpl<F> for [Complex<F>; 2usize.pow($n as u32)]
 		{
 			fn len(&self) -> usize {
 				$n
@@ -97,37 +102,37 @@ macro_rules! impl_array_state {
 		impl_array_state!(@impl, $sum + $n0, $($n),+);
 	};
 	($($n:expr),+) => {
-		impl_array_state!(@impl, 0usize, $($n),+);
+		impl_array_state!(@impl, 1usize, $($n),+);
 	};
 }
 
-impl_array_state!(1, 2, 4, 8, 16, 32);
+impl_array_state!(2, 4, 8, 16, 32);
 
-struct StateVec<F = num::Complex<f64>>(usize, Vec<F>);
+pub struct StateVec<F = f64>(usize, Vec<Complex<F>>);
 
-impl<F: num::Num> StateVec<F> {
+impl<F: num::Num + Clone> StateVec<F> {
 	pub fn new(n: usize) -> Self {
 		assert!(n > 0);
-		let mut v = vec![F::zero(); 2usize.pow(n as u32)];
-		v[0] = F::one();
+		let mut v = vec![<Complex<F>>::zero(); 2usize.pow(n as u32)];
+		v[0] = <Complex<F>>::one();
 		Self(n, v)
 	}
 }
 
-unsafe impl PureStateImpl<Complex<f64>> for StateVec<Complex<f64>> {
+unsafe impl PureStateImpl<f64> for StateVec<f64> {
 	fn len(&self) -> usize {
 		self.0
 	}
 }
 
-impl<F: num::Num> AsRef<[F]> for StateVec<F> {
-	fn as_ref(&self) -> &[F] {
+impl<F: num::Num> AsRef<[Complex<F>]> for StateVec<F> {
+	fn as_ref(&self) -> &[Complex<F>] {
 		&self.1
 	}
 }
 
-impl<F: num::Num> AsMut<[F]> for StateVec<F> {
-	fn as_mut(&mut self) -> &mut [F] {
+impl<F: num::Num> AsMut<[Complex<F>]> for StateVec<F> {
+	fn as_mut(&mut self) -> &mut [Complex<F>] {
 		&mut self.1
 	}
 }
