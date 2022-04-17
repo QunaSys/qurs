@@ -37,9 +37,9 @@ unsafe trait PureStateImpl<F>: AsRef<[F]> {
 	fn len(&self) -> usize;
 }
 
-impl<F: num::Num, T> StateRef<F> for T
+impl StateRef<Complex<f64>> for T
 where
-	T: PureStateImpl<F>,
+	T: PureStateImpl<Complex<f64>>,
 {
 	fn len(&self) -> usize {
 		self.len()
@@ -63,9 +63,9 @@ where
 	}
 }
 
-impl<F: num::Num, T> StateMut<F> for T
+impl StateMut<F> for T
 where
-	T: PureStateImpl<F> + AsMut<[F]>,
+	T: PureStateImpl<Complex<f64>> + AsMut<[F]>,
 {
 	fn set_zero_state(&mut self) {
 		unimplemented!()
@@ -75,9 +75,9 @@ where
 	}
 }
 
-impl<F: num::Num, T> PureStateRef<F> for T where T: PureStateImpl<F> {}
+impl PureStateRef<Complex<f64>> for T where T: PureStateImpl<Complex<f64>> {}
 
-impl<F: num::Num, T> PureStateMut<F> for T where T: PureStateImpl<F> + AsMut<[F]> {}
+impl PureStateMut<Complex<f64>> for T where T: PureStateImpl<Complex<f64>> + AsMut<[Complex<f64>]> {}
 
 macro_rules! impl_array_state {
 	(@impl, $n:expr) => {
@@ -114,7 +114,7 @@ impl<F: num::Num> StateVec<F> {
 	}
 }
 
-unsafe impl<F: num::Num> PureStateImpl<F> for StateVec<F> {
+unsafe impl PureStateImpl<Complex<f64>> for StateVec<Complex<f64>> {
 	fn len(&self) -> usize {
 		self.0
 	}
