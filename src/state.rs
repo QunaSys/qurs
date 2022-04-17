@@ -1,6 +1,8 @@
 use num;
+use num::Complex;
+use std::borrow::{Borrow, BorrowMut};
 
-pub trait StateRef<F: num::Float> {
+pub trait StateRef<F> {
 	// TODO: Place analyzing operations performed on both PureStateRef and
 	// DenseStateRef
 
@@ -14,7 +16,7 @@ pub trait StateRef<F: num::Float> {
 	fn get_marginal_probability(&self, qbits: &[usize]) -> F;
 }
 
-pub trait StateMut<F: num::Float>: StateRef<F> {
+pub trait StateMut<F>: StateRef<F> {
 	// TODO: Place updating operations performed on both PureStateRef and
 	// DenseStateRef
 
@@ -22,18 +24,113 @@ pub trait StateMut<F: num::Float>: StateRef<F> {
 	fn normalize(&mut self, norm_square: F);
 }
 
-pub trait PureStateRef {}
+pub trait PureStateRef<F>: StateRef<F> {}
 
-impl<T: PureStateRef> StateRef for T {}
+pub trait PureStateMut<F>: PureStateRef<F> + StateMut<F> {}
 
-pub trait PureStateMut: PureStateRef {}
+// Internal trait to implement `PureStateRef` and `PureStateImpl` for slice-like
+// types
+//
+// # SAFETY
+// the slice has more than 2^(len()) elements
+unsafe trait PureStateImpl<F>: AsRef<[F]> {
+	fn len(&self) -> usize;
+}
 
-impl<T: PureStateMut> StateMut for T {}
+impl<F: num::Num, T> StateRef<F> for T
+where
+	T: PureStateImpl<F>,
+{
+	fn len(&self) -> usize {
+		self.len()
+	}
 
-// TODO: N=2以外(4,8,16,32,...)の場合も実装。マクロを再帰的に使う
-impl<T: Borrow<[Complex<f64>; 2]>> PureStateRef for T {}
+	fn get_entropy() -> F {
+		unimplemented!()
+	}
 
-impl<T: BorrowMut<[Complex<f64>; 2]>> PureStateMut for T {}
+	fn get_squared_norm() -> F {
+		unimplemented!()
+	}
+
+	// panic-ing function
+	fn get_zero_probability(&self, qbit: usize) -> F {
+		unimplemented!()
+	}
+
+	fn get_marginal_probability(&self, qbits: &[usize]) -> F {
+		unimplemented!()
+	}
+}
+
+impl<F: num::Num, T> StateMut<F> for T
+where
+	T: PureStateImpl<F> + AsMut<[F]>,
+{
+	fn set_zero_state(&mut self) {
+		unimplemented!()
+	}
+	fn normalize(&mut self, norm_square: F) {
+		unimplemented!()
+	}
+}
+
+impl<F: num::Num, T> PureStateRef<F> for T where T: PureStateImpl<F> {}
+
+impl<F: num::Num, T> PureStateMut<F> for T where T: PureStateImpl<F> + AsMut<[F]> {}
+
+macro_rules! impl_array_state {
+	(@impl, $n:expr) => {
+		unsafe impl<F: num::Num> SliceImpl<F> for [F; 2usize.pow($n as u32)]
+		{
+			fn len(&self) -> usize {
+				$n
+			}
+		}
+	};
+	(@impl, $sum:expr, $n0:expr) => {
+		impl_array_state!(@impl, $sum);
+		impl_array_state!(@impl, $sum + $n0);
+	};
+	(@impl, $sum:expr, $n0:expr, $($n:expr),+) => {
+		impl_array_state!(@impl, $sum, $($n),+);
+		impl_array_state!(@impl, $sum + $n0, $($n),+);
+	};
+	($($n:expr),+) => {
+		impl_array_state!(@impl, 0usize, $($n),+);
+	};
+}
+
+impl_array_state!(1, 2, 4, 8, 16, 32);
+
+struct StateVec<F = num::Complex<f64>>(usize, Vec<F>);
+
+impl<F: num::Num> StateVec<F> {
+	pub fn new(n: usize) -> Self {
+		assert!(n > 0);
+		let mut v = vec![F::zero(); 2usize.pow(n as u32)];
+		v[0] = F::one();
+		Self(n, v)
+	}
+}
+
+unsafe impl<F: num::Num> PureStateImpl<F> for StateVec<F> {
+	fn len(&self) -> usize {
+		self.0
+	}
+}
+
+impl<F: num::Num> AsRef<[F]> for StateVec<F> {
+	fn as_ref(&self) -> &[F] {
+		&self.1
+	}
+}
+
+impl<F: num::Num> AsMut<[F]> for StateVec<F> {
+	fn as_mut(&mut self) -> &mut [F] {
+		&mut self.1
+	}
+}
 
 struct GpuPureState();
 
