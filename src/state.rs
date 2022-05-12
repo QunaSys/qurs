@@ -1,5 +1,6 @@
-use num;
+use super::binding::qulacs::{self, CTYPE};
 use num::{Complex, One, Zero};
+use rand;
 #[allow(clippy::len_without_is_empty)]
 pub trait StateRef<F> {
 	// TODO: Place analyzing operations performed on both PureStateRef and
@@ -20,7 +21,12 @@ pub trait StateMut<F>: StateRef<F> {
 	// DenseStateRef
 
 	fn set_zero_state(&mut self);
+	fn set_computational_basis(&mut self, comp_basis: usize);
+	fn set_haar_random_state(&mut self);
+	fn set_haar_random_state_with_seed(&mut self, seed: u32);
 	fn normalize(&mut self, norm_square: F);
+	fn add_state(&mut self, state: &[Complex<F>]);
+	fn multiply_coef(&mut self, coef: Complex<F>);
 }
 
 pub trait PureStateRef<F>: StateRef<F> {}
@@ -45,56 +51,55 @@ where
 	}
 
 	fn get_entropy(&self) -> f64 {
-		self.as_ref()
-			.iter()
-			.map(|val| {
-				let p = val.norm_sqr().max(1e-15);
-				-1.0 * p * p.ln()
-			})
-			.sum()
+		unsafe {
+			qulacs::measurement_distribution_entropy(
+				self.as_ref().as_ptr() as *const CTYPE,
+				self.as_ref().len() as u64,
+			)
+		}
 	}
 
 	fn get_squared_norm(&self) -> f64 {
-		self.as_ref().iter().map(|val| val.norm_sqr()).sum()
+		unsafe {
+			qulacs::state_norm_squared(
+				self.as_ref().as_ptr() as *const CTYPE,
+				self.as_ref().len() as u64,
+			)
+		}
 	}
 
 	// panic-ing function
 	fn get_zero_probability(&self, qbit: usize) -> f64 {
-		if self.len() < qbit {
-			panic!("Error: get_zero_probability: index of target qubit must be smaller than qubit counts of the state");
+		unsafe {
+			qulacs::M0_prob(
+				qbit as u32,
+				self.as_ref().as_ptr() as *const CTYPE,
+				self.as_ref().len() as u64,
+			)
 		}
-		let mask = 1 << qbit;
-		let dim = self.as_ref().len();
-		(0..dim / 2)
-			.map(|state_index| {
-				let basis_0 = insert_zero_to_basis_index(state_index, mask, qbit);
-				self.as_ref()[basis_0].norm_sqr()
-			})
-			.sum()
 	}
 
 	// panic-ing function
 	fn get_marginal_probability(&self, qbits: &[usize]) -> f64 {
-		if self.len() != qbits.len() {
-			panic!("Error: get_marginal_probability(&[usize]): the length of qbits must be equal to len()");
+		let mut target_index = vec![];
+		let mut target_value = vec![];
+
+		for (i, val) in qbits.iter().enumerate() {
+			if *val == 0 || *val == 1 {
+				target_index.push(i as u32);
+				target_value.push(*val as u32);
+			}
 		}
-		let target: Vec<(usize, &usize)> = qbits
-			.iter()
-			.enumerate()
-			.filter(|e| *e.1 == 0 || *e.1 == 1)
-			.collect();
-		let dim = self.as_ref().len();
-		let loop_dim = dim >> target.len();
-		(0..loop_dim)
-			.map(|mut basis| {
-				for (insert_index, insert_val) in &target {
-					let mask = 1 << insert_index;
-					basis = insert_zero_to_basis_index(basis, mask, *insert_index);
-					basis ^= mask * *insert_val;
-				}
-				self.as_ref()[basis].norm_sqr()
-			})
-			.sum()
+
+		unsafe {
+			qulacs::marginal_prob(
+				target_index.as_ptr() as *const u32,
+				target_value.as_ptr() as *const u32,
+				target_index.len() as u32,
+				self.as_ref().as_ptr() as *const CTYPE,
+				self.as_ref().len() as u64,
+			)
+		}
 	}
 }
 
@@ -103,15 +108,75 @@ where
 	T: PureStateImpl<f64> + AsMut<[Complex<f64>]>,
 {
 	fn set_zero_state(&mut self) {
-		self.as_mut()[0] = Complex::one();
-		for i in 1..self.as_ref().len() {
-			self.as_mut()[i] = Complex::zero();
+		unsafe {
+			qulacs::initialize_quantum_state(
+				self.as_mut().as_mut_ptr() as *mut CTYPE,
+				self.as_ref().len() as u64,
+			);
 		}
 	}
-	fn normalize(&mut self, norm_square: f64) {
-		for e in self.as_mut().iter_mut() {
-			*e *= (1. / norm_square).sqrt();
+	fn set_computational_basis(&mut self, comp_basis: usize) {
+		unsafe {
+			qulacs::initialize_quantum_state(
+				self.as_mut().as_mut_ptr() as *mut CTYPE,
+				self.as_ref().len() as u64,
+			);
+		};
+		self.as_mut()[0] = Complex::zero();
+		self.as_mut()[comp_basis] = Complex::one();
+	}
+
+	fn set_haar_random_state(&mut self) {
+		unsafe {
+			qulacs::initialize_Haar_random_state_with_seed(
+				self.as_mut().as_mut_ptr() as *mut CTYPE,
+				self.as_ref().len() as u64,
+				rand::random(),
+			);
+		};
+	}
+
+	fn set_haar_random_state_with_seed(&mut self, seed: u32) {
+		unsafe {
+			qulacs::initialize_Haar_random_state_with_seed(
+				self.as_mut().as_mut_ptr() as *mut CTYPE,
+				self.as_ref().len() as u64,
+				seed,
+			);
+		};
+	}
+
+	fn normalize(&mut self, squared_norm: f64) {
+		unsafe {
+			qulacs::normalize(
+				squared_norm,
+				self.as_mut().as_mut_ptr() as *mut CTYPE,
+				self.as_ref().len() as u64,
+			)
+		};
+	}
+
+	fn add_state(&mut self, state: &[Complex<f64>]) {
+		unsafe {
+			qulacs::state_add(
+				state.as_ptr() as *const CTYPE,
+				self.as_mut().as_mut_ptr() as *mut CTYPE,
+				state.as_ref().len() as u64,
+			);
 		}
+	}
+
+	fn multiply_coef(&mut self, coef: Complex<f64>) {
+		unsafe {
+			qulacs::state_multiply(
+				CTYPE {
+					re: coef.re,
+					im: coef.im,
+				},
+				self.as_mut().as_mut_ptr() as *mut CTYPE,
+				self.as_ref().len() as u64,
+			)
+		};
 	}
 }
 
@@ -178,10 +243,6 @@ pub trait GeneralStateRef {}
 
 pub trait GeneralStateMut {}
 
-fn insert_zero_to_basis_index(basis_index: usize, basis_mask: usize, qubit_index: usize) -> usize {
-	((basis_index >> qubit_index) << (qubit_index + 1)) + basis_index % basis_mask
-}
-
 #[cfg(test)]
 mod state_tests {
 	use super::{StateMut, StateRef};
@@ -206,6 +267,10 @@ mod state_tests {
 	#[test]
 	fn test_normalize() {
 		let mut state = [seed_comp(), seed_comp(), seed_comp(), seed_comp()];
+		state.set_haar_random_state();
+		state.set_haar_random_state_with_seed(1);
+		state.add_state(&state.clone());
+		state.multiply_coef(seed_comp());
 		state.normalize(state.get_squared_norm());
 		let norm: f64 = state.iter().map(|e| e.norm_sqr()).sum();
 		assert_near!(norm, 1., EPS);
@@ -237,6 +302,7 @@ mod state_tests {
 			([2, 1], probs[2] + probs[3]),
 			([2, 2], probs[0] + probs[1] + probs[2] + probs[3]),
 		];
+
 		for (i, prob) in tests {
 			assert_near!(state.get_marginal_probability(&i), prob, EPS);
 		}
