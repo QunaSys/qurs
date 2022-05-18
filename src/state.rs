@@ -258,39 +258,41 @@ mod state_tests {
 	}
 
 	#[test]
-	fn test_len() {
+	fn test_impl() {
 		assert_eq!([seed_comp(); 2].len(), 1);
 		assert_eq!([seed_comp(); 16].len(), 4);
 		assert_eq!([seed_comp(); 128].len(), 7);
-	}
 
-	#[test]
-	fn test_normalize() {
-		let mut state = [seed_comp(), seed_comp(), seed_comp(), seed_comp()];
-		state.set_haar_random_state();
-		state.set_haar_random_state_with_seed(1);
+		let mut state = [Complex::one(), Complex::zero()];
 		state.add_state(&state.clone());
-		state.multiply_coef(seed_comp());
+		assert_eq!(state, [Complex::new(2., 0.), Complex::zero()]);
+
 		state.normalize(state.get_squared_norm());
-		let norm: f64 = state.iter().map(|e| e.norm_sqr()).sum();
-		assert_near!(norm, 1., EPS);
+		assert_eq!(state, [Complex::one(), Complex::zero()]);
+
+		let mut state = [Complex::one(), Complex::zero()];
+		let random = seed_comp();
+		state.multiply_coef(random);
+		assert_eq!(state, [random, Complex::zero()]);
+
+		state.set_computational_basis(1);
+		assert_eq!(state, [Complex::zero(), Complex::one()]);
+
+		state.set_haar_random_state();
+		assert_near!(state.get_squared_norm(), 1., EPS);
+
+		state.set_haar_random_state_with_seed(1);
+		assert_near!(state.get_squared_norm(), 1., EPS);
+
 		state.set_zero_state();
-		assert_eq!(
-			state,
-			[
-				Complex::one(),
-				Complex::zero(),
-				Complex::zero(),
-				Complex::zero()
-			]
-		);
+		assert_eq!(state, [Complex::one(), Complex::zero()]);
+
 		assert_near!(state.get_entropy(), 0., EPS);
-	}
-	#[test]
-	fn test_get_probability() {
+
 		let state = [seed_comp(), seed_comp(), seed_comp(), seed_comp()];
 		let probs: Vec<f64> = state.iter().map(|e| e.norm_sqr()).collect();
 		assert_near!(state.get_zero_probability(0), probs[0] + probs[2], EPS);
+
 		let tests = [
 			([0, 0], probs[0]),
 			([1, 0], probs[1]),
