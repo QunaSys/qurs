@@ -122,9 +122,10 @@ pub fn inner_product(state_bra: &[Complex<f64>], state_ket: &[Complex<f64>]) -> 
 	}
 }
 
-pub fn tensor_product<T>(state_left: &T, state_right: &T) -> StateVec<f64>
+pub fn tensor_product<L, R>(state_left: &L, state_right: &R) -> StateVec<f64>
 where
-	T: StateRef<f64> + AsRef<[Complex<f64>]>,
+	L: StateRef<f64> + AsRef<[Complex<f64>]>,
+	R: StateRef<f64> + AsRef<[Complex<f64>]>,
 {
 	let mut result = StateVec::<f64>::new(state_left.len() + state_right.len());
 	unsafe {
@@ -139,11 +140,11 @@ where
 	result
 }
 
-pub fn permutate_qubit<T>(state: &T, qubit_order: &[u64]) -> StateVec<f64>
+pub fn permutate_qubit<T>(state: T, qubit_order: &[u32]) -> T
 where
-	T: StateRef<f64> + AsRef<[Complex<f64>]>,
+	T: StateRef<f64> + AsRef<[Complex<f64>]> + AsMut<[Complex<f64>]> + Clone,
 {
-	let mut result = StateVec::<f64>::new(state.len());
+	let mut result = state.clone();
 	unsafe {
 		qulacs::state_permutate_qubit(
 			qubit_order.as_ptr() as *const u32,
@@ -156,19 +157,66 @@ where
 	result
 }
 
+pub fn drop_qubit<T>(state: &T, target: &[u32], projection: &[u32]) -> StateVec<f64>
+where
+	T: StateRef<f64> + AsRef<[Complex<f64>]>,
+{
+	if state.len() <= target.len() || target.len() != projection.len() {
+		panic!("Invalid qubit count");
+	}
+	let qubit_count = state.len() - target.len();
+	let mut qs = StateVec::new(qubit_count);
+	unsafe {
+		qulacs::state_drop_qubits(
+			target.as_ptr() as *const u32,
+			projection.as_ptr() as *const u32,
+			target.len() as u32,
+			state.as_ref().as_ptr() as *const CTYPE,
+			qs.as_mut().as_mut_ptr() as *mut CTYPE,
+			state.as_ref().len() as u64,
+		);
+	}
+	qs
+}
+
 #[test]
 fn test_lib() {
 	use num::{One, Zero};
 	let one = Complex::one;
 	let zero = Complex::zero;
+
 	assert_eq!([one(); 2].as_ref().len(), 2);
 	let mut state = [one(), zero(), zero(), zero()];
 	x_gate(1, &mut state);
 	assert_eq!(state, [zero(), zero(), one(), zero()]);
+
 	assert_eq!(inner_product(&state, &state), one());
+
 	let state = [one(), zero()];
 	assert_eq!(
 		tensor_product(&state, &state).as_ref(),
 		[one(), zero(), zero(), zero()]
 	);
+
+	let mut state = [zero(); 8];
+	state.set_haar_random_state();
+	let permutated_state = permutate_qubit(state, &[1, 0, 2]);
+	let corr = [0, 2, 1, 3, 4, 6, 5, 7];
+	dbg!(&state, &permutated_state);
+	for i in 0..state.as_ref().len() {
+		assert_eq!(permutated_state.as_ref()[i].re, state[corr[i]].re);
+		assert_eq!(permutated_state.as_ref()[i].im, state[corr[i]].im);
+	}
+
+	let mut state = [zero(); 16];
+	state.set_haar_random_state();
+	let dropped_state = drop_qubit(&state, &[2, 0], &[0, 1]);
+	assert_eq!(dropped_state.as_ref().len(), 4);
+	let corr = [1, 3, 9, 11];
+	dbg!(&state, &dropped_state);
+
+	for i in 0..dropped_state.as_ref().len() {
+		assert_eq!(dropped_state.as_ref()[i].re, state[corr[i]].re);
+		assert_eq!(dropped_state.as_ref()[i].im, state[corr[i]].im);
+	}
 }

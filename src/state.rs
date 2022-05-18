@@ -208,6 +208,7 @@ macro_rules! impl_array_state {
 
 impl_array_state!(1, 2, 4, 8, 16);
 
+#[derive(Debug)]
 pub struct StateVec<F = f64>(usize, Vec<Complex<F>>);
 
 impl<F: num::Num + Clone> StateVec<F> {
@@ -244,7 +245,7 @@ pub trait GeneralStateRef {}
 pub trait GeneralStateMut {}
 
 #[cfg(test)]
-mod state_tests {
+pub mod state_tests {
 	use super::{StateMut, StateRef};
 	use num::{complex::Complex64, Complex, One, Zero};
 	const EPS: f64 = 1e-10;
