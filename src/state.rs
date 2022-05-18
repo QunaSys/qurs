@@ -1,13 +1,12 @@
 use super::binding::qulacs::{self, CTYPE};
 use num::{Complex, One, Zero};
 use rand;
-#[allow(clippy::len_without_is_empty)]
+
 pub trait StateRef<F> {
 	// TODO: Place analyzing operations performed on both PureStateRef and
 	// DenseStateRef
 
-	fn len(&self) -> usize;
-
+	fn qubit_count(&self) -> usize;
 	fn get_entropy(&self) -> F;
 	fn get_squared_norm(&self) -> F;
 
@@ -39,15 +38,15 @@ pub trait PureStateMut<F>: PureStateRef<F> + StateMut<F> {}
 /// # Safety
 /// the slice has more than 2^(len()) elements
 unsafe trait PureStateImpl<F>: AsRef<[Complex<F>]> {
-	fn len(&self) -> usize;
+	fn qubit_count(&self) -> usize;
 }
 
 impl<T> StateRef<f64> for T
 where
 	T: PureStateImpl<f64>,
 {
-	fn len(&self) -> usize {
-		self.len()
+	fn qubit_count(&self) -> usize {
+		self.qubit_count()
 	}
 
 	fn get_entropy(&self) -> f64 {
@@ -188,7 +187,7 @@ macro_rules! impl_array_state {
 	(@impl, $n:expr) => {
 		unsafe impl<F: num::Num> PureStateImpl<F> for [Complex<F>; 2usize.pow($n as u32)]
 		{
-			fn len(&self) -> usize {
+			fn qubit_count(&self) -> usize {
 				$n
 			}
 		}
@@ -221,7 +220,7 @@ impl<F: num::Num + Clone> StateVec<F> {
 }
 
 unsafe impl PureStateImpl<f64> for StateVec<f64> {
-	fn len(&self) -> usize {
+	fn qubit_count(&self) -> usize {
 		self.0
 	}
 }
@@ -260,9 +259,9 @@ pub mod state_tests {
 
 	#[test]
 	fn test_impl() {
-		assert_eq!([seed_comp(); 2].len(), 1);
-		assert_eq!([seed_comp(); 16].len(), 4);
-		assert_eq!([seed_comp(); 128].len(), 7);
+		assert_eq!([seed_comp(); 2].qubit_count(), 1);
+		assert_eq!([seed_comp(); 16].qubit_count(), 4);
+		assert_eq!([seed_comp(); 128].qubit_count(), 7);
 
 		let mut state = [Complex::one(), Complex::zero()];
 		state.add_state(&state.clone());

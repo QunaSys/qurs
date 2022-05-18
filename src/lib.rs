@@ -127,7 +127,7 @@ where
 	L: StateRef<f64> + AsRef<[Complex<f64>]>,
 	R: StateRef<f64> + AsRef<[Complex<f64>]>,
 {
-	let mut result = StateVec::<f64>::new(state_left.len() + state_right.len());
+	let mut result = StateVec::<f64>::new(state_left.qubit_count() + state_right.qubit_count());
 	unsafe {
 		qulacs::state_tensor_product(
 			state_left.as_ref().as_ptr() as *const CTYPE,
@@ -150,7 +150,7 @@ where
 			qubit_order.as_ptr() as *const u32,
 			state.as_ref().as_ptr() as *const CTYPE,
 			result.as_mut().as_mut_ptr() as *mut CTYPE,
-			state.len() as u32,
+			state.qubit_count() as u32,
 			state.as_ref().len() as u64,
 		)
 	}
@@ -161,10 +161,10 @@ pub fn drop_qubit<T>(state: &T, target: &[u32], projection: &[u32]) -> StateVec<
 where
 	T: StateRef<f64> + AsRef<[Complex<f64>]>,
 {
-	if state.len() <= target.len() || target.len() != projection.len() {
+	if state.qubit_count() <= target.len() || target.len() != projection.len() {
 		panic!("Invalid qubit count");
 	}
-	let qubit_count = state.len() - target.len();
+	let qubit_count = state.qubit_count() - target.len();
 	let mut qs = StateVec::new(qubit_count);
 	unsafe {
 		qulacs::state_drop_qubits(
@@ -202,7 +202,6 @@ fn test_lib() {
 	state.set_haar_random_state();
 	let permutated_state = permutate_qubit(state, &[1, 0, 2]);
 	let corr = [0, 2, 1, 3, 4, 6, 5, 7];
-	dbg!(&state, &permutated_state);
 	for i in 0..state.as_ref().len() {
 		assert_eq!(permutated_state.as_ref()[i].re, state[corr[i]].re);
 		assert_eq!(permutated_state.as_ref()[i].im, state[corr[i]].im);
@@ -213,7 +212,6 @@ fn test_lib() {
 	let dropped_state = drop_qubit(&state, &[2, 0], &[0, 1]);
 	assert_eq!(dropped_state.as_ref().len(), 4);
 	let corr = [1, 3, 9, 11];
-	dbg!(&state, &dropped_state);
 
 	for i in 0..dropped_state.as_ref().len() {
 		assert_eq!(dropped_state.as_ref()[i].re, state[corr[i]].re);
