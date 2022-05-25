@@ -1,6 +1,8 @@
 use super::binding::qulacs::{self, CTYPE};
 use num::{Complex, One, Zero};
+use ordered_float::OrderedFloat;
 use rand;
+use superslice::Ext;
 
 pub trait StateRef<F> {
 	// TODO: Place analyzing operations performed on both PureStateRef and
@@ -9,6 +11,7 @@ pub trait StateRef<F> {
 	fn qubit_count(&self) -> usize;
 	fn get_entropy(&self) -> F;
 	fn get_squared_norm(&self) -> F;
+	fn sampling(&self, sampling_count: u32) -> Vec<u64>;
 
 	// panic-ing function
 	fn get_zero_probability(&self, qbit: usize) -> F;
@@ -99,6 +102,23 @@ where
 				self.as_ref().len() as u64,
 			)
 		}
+	}
+
+	fn sampling(&self, sampling_count: u32) -> Vec<u64> {
+		let mut stacked_prob: Vec<OrderedFloat<f64>> = vec![];
+		let mut result: Vec<u64> = vec![];
+		let mut sum = 0.;
+		stacked_prob.push(OrderedFloat(0.));
+		for i in 0..self.as_ref().len() {
+			sum += Complex::norm(self.as_ref()[i]);
+			stacked_prob.push(OrderedFloat(sum));
+		}
+		for _ in 0..sampling_count {
+			let r = rand::random::<f64>();
+			let index = stacked_prob.lower_bound(&OrderedFloat(r));
+			result.push(index as u64 - 1);
+		}
+		result
 	}
 }
 
@@ -277,6 +297,8 @@ pub mod state_tests {
 
 		state.set_computational_basis(1);
 		assert_eq!(state, [Complex::zero(), Complex::one()]);
+
+		assert_eq!(state.sampling(5), [1; 5]);
 
 		state.set_haar_random_state();
 		assert_near!(state.get_squared_norm(), 1., EPS);
