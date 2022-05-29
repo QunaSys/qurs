@@ -179,6 +179,25 @@ where
 	qs
 }
 
+pub fn expectation_value_multi_qubit_pauli_operator_partial_list<T>(
+	target_qubit_index_list: &[u32],
+	pauli_operator_type_list: &[u32],
+	state: &T,
+) -> f64
+where
+	T: StateRef<f64> + AsRef<[Complex<f64>]>,
+{
+	unsafe {
+		qulacs::expectation_value_multi_qubit_Pauli_operator_partial_list_single_thread(
+			target_qubit_index_list.as_ptr() as *const u32,
+			pauli_operator_type_list.as_ptr() as *const u32,
+			target_qubit_index_list.len() as u32,
+			state.as_ref().as_ptr() as *const CTYPE,
+			state.as_ref().len() as u64,
+		)
+	}
+}
+
 #[test]
 fn test_lib() {
 	use num::{One, Zero};
@@ -217,4 +236,9 @@ fn test_lib() {
 		assert_eq!(dropped_state.as_ref()[i].re, state[corr[i]].re);
 		assert_eq!(dropped_state.as_ref()[i].im, state[corr[i]].im);
 	}
+
+	let state = [one(); 4];
+	let expected =
+		expectation_value_multi_qubit_pauli_operator_partial_list(&[0, 1], &[1, 1], &state);
+	assert_eq!(expected, 4.);
 }
