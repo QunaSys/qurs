@@ -8,13 +8,22 @@ pub trait StateRef<F> {
 	// TODO: Place analyzing operations performed on both PureStateRef and
 	// DenseStateRef
 
+	///Get qubit count
 	fn qubit_count(&self) -> usize;
+
+	///Get entropy
 	fn get_entropy(&self) -> F;
+
+	///Get squared norm
 	fn get_squared_norm(&self) -> F;
+
+	///Sampling measurement results
 	fn sampling(&self, sampling_count: u32) -> Vec<u64>;
 
-	// panic-ing function
+	/// Get probability with which we obtain 0 when we measure a qubit
 	fn get_zero_probability(&self, qbit: usize) -> F;
+
+	/// Get merginal probability for measured values
 	fn get_marginal_probability(&self, qbits: &[usize]) -> F;
 }
 
@@ -22,12 +31,25 @@ pub trait StateMut<F>: StateRef<F> {
 	// TODO: Place updating operations performed on both PureStateRef and
 	// DenseStateRef
 
+	///Set state to |0>
 	fn set_zero_state(&mut self);
+
+	///Set state to computational basis
 	fn set_computational_basis(&mut self, comp_basis: usize);
+
+	///Set Haar random state
 	fn set_haar_random_state(&mut self);
+
+	///Set Haar random state with seed
 	fn set_haar_random_state_with_seed(&mut self, seed: u32);
+
+	///Normalize quantum state
 	fn normalize(&mut self, norm_square: F);
+
+	///Add state vector to this state
 	fn add_state(&mut self, state: &[Complex<F>]);
+
+	///Multiply coefficient to this state
 	fn multiply_coef(&mut self, coef: Complex<F>);
 }
 
@@ -35,9 +57,9 @@ pub trait PureStateRef<F>: StateRef<F> {}
 
 pub trait PureStateMut<F>: PureStateRef<F> + StateMut<F> {}
 
-// Internal trait to implement `PureStateRef` and `PureStateImpl` for slice-like
-// types
-//
+/// Internal trait to implement `PureStateRef` and `PureStateImpl` for
+/// slice-like types
+///
 /// # Safety
 /// the slice has more than 2^(len()) elements
 unsafe trait PureStateImpl<F>: AsRef<[Complex<F>]> {
