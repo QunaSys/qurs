@@ -92,8 +92,10 @@ where
 		}
 	}
 
-	// panic-ing function
 	fn get_zero_probability(&self, qbit: usize) -> f64 {
+		if qbit >= self.qubit_count() {
+			panic!("Error: get_zero_probability; index of target qubit must be smaller than qubit_count");
+		}
 		unsafe {
 			qulacs::M0_prob(
 				qbit as u32,
@@ -105,6 +107,11 @@ where
 
 	// panic-ing function
 	fn get_marginal_probability(&self, qbits: &[usize]) -> f64 {
+		if qbits.len() != self.qubit_count() {
+			panic!(
+				"Error: get_marginal_probability; the length of qbits must be equal to qubit_count"
+			);
+		}
 		let mut target_index = vec![];
 		let mut target_value = vec![];
 
@@ -279,7 +286,7 @@ impl<F: num::Num> AsMut<[Complex<F>]> for StateVec<F> {
 	}
 }
 
-// struct GpuPureState();
+//TODO: struct GpuPureState();
 
 pub trait GeneralStateRef {}
 

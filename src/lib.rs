@@ -182,6 +182,9 @@ pub fn rz_gate(target_qubit_index: u32, angle: f64, state: &mut [Complex<f64>]) 
 
 ///Compute the inner product of quantum states.
 pub fn inner_product(state_bra: &[Complex<f64>], state_ket: &[Complex<f64>]) -> Complex<f64> {
+	if state_bra.len() != state_ket.len() {
+		panic!("Error: inner_product; Invalid qubit count");
+	}
 	unsafe {
 		let CTYPE { re, im } = qulacs::state_inner_product(
 			state_bra.as_ptr() as *const CTYPE,
@@ -216,6 +219,9 @@ pub fn permutate_qubit<T>(state: T, qubit_order: &[u32]) -> T
 where
 	T: StateRef<f64> + AsRef<[Complex<f64>]> + AsMut<[Complex<f64>]> + Clone,
 {
+	if state.qubit_count() != qubit_order.len() {
+		panic!("Error: permutate_qubit; Invalid qubit count");
+	}
 	let mut result = state.clone();
 	unsafe {
 		qulacs::state_permutate_qubit(
@@ -235,7 +241,7 @@ where
 	T: StateRef<f64> + AsRef<[Complex<f64>]>,
 {
 	if state.qubit_count() <= target.len() || target.len() != projection.len() {
-		panic!("Invalid qubit count");
+		panic!("Error: drop_qubit; Invalid qubit count");
 	}
 	let qubit_count = state.qubit_count() - target.len();
 	let mut qs = StateVec::new(qubit_count);
