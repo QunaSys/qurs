@@ -9,7 +9,6 @@ fn main() {
 	let dest_dir = Path::new(&out_dir).join("qulacs");
 	let qulacs_dir = Path::new("contrib").join("qulacs");
 	let csim_dir = qulacs_dir.join("src").join("csim");
-	let csim_old_dir = qulacs_dir.join("src").join("csim_old");
 	// let preprocess = "_USE_SIMD";
 	let _ = fs::remove_dir_all(&dest_dir);
 	fs::create_dir_all(&dest_dir).unwrap();
@@ -28,11 +27,10 @@ fn main() {
 		.compile("qulacs");
 	// cc.define(preprocess, "1");
 	let csim_dir = csim_dir.to_str().unwrap();
-	let csim_old_dir = csim_old_dir.to_str().unwrap();
 	let bindings = bindgen::Builder::default()
 		.header(format!("{csim_dir}/update_ops.h"))
 		.header(format!("{csim_dir}/stat_ops.h"))
-		.header(format!("{csim_old_dir}/memory_ops.h"))
+		.header(format!("{csim_dir}/init_ops.h"))
 		.parse_callbacks(Box::new(bindgen::CargoCallbacks))
 		.generate()
 		.expect("Unable to generate bindings");
