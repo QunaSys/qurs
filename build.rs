@@ -7,8 +7,7 @@ fn main() {
 	let out_dir = env::var_os("OUT_DIR").unwrap();
 	println!("cargo:rerun-if-changed=build.rs");
 	let dest_dir = Path::new(&out_dir).join("qulacs");
-	let qulacs_dir = Path::new("contrib").join("qulacs");
-	let csim_dir = qulacs_dir.join("src").join("csim");
+	let csim_dir = Path::new("contrib").join("qulacs").join("src").join("csim");
 	// let preprocess = "_USE_SIMD";
 	let _ = fs::remove_dir_all(&dest_dir);
 	fs::create_dir_all(&dest_dir).unwrap();
