@@ -250,10 +250,28 @@ pub struct StateVec<F = f64>(usize, Vec<Complex<F>>);
 
 impl<F: num::Num + Clone> StateVec<F> {
 	pub fn new(n: usize) -> Self {
-		assert!(n > 0);
 		let mut v = vec![<Complex<F>>::zero(); 2usize.pow(n as u32)];
 		v[0] = <Complex<F>>::one();
 		Self(n, v)
+	}
+
+	/// Append an qubit initialized to |0> at end of this `StateVec`.
+	///
+	/// Returns the index of added qubit.
+	///
+	/// ```
+	/// # use qurs::prelude::*;
+	/// # use qurs::StateVec;
+	/// let mut v = StateVec::new(0);
+	/// assert_eq!(v.qubit_count(), 0);
+	/// assert_eq!(v.push(), 0);
+	/// assert_eq!(v.qubit_count(), 1);
+	/// ```
+	pub fn push(&mut self) -> usize {
+		self.1
+			.extend(core::iter::repeat(<Complex<F>>::zero()).take(self.1.len()));
+		self.0 += 1;
+		self.0 - 1
 	}
 }
 
