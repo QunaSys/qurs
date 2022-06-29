@@ -2,6 +2,7 @@ use super::binding::qulacs::{self, CTYPE};
 use num::{Complex, One, Zero};
 use ordered_float::OrderedFloat;
 use rand;
+use std::fmt;
 use superslice::Ext;
 
 pub trait StateRef<F> {
@@ -21,10 +22,10 @@ pub trait StateRef<F> {
 	fn sampling(&self, sampling_count: u32) -> Vec<u64>;
 
 	/// Get probability with which we obtain 0 when we measure a qubit
-	fn get_zero_probability(&self, qbit: usize) -> F;
+	fn get_zero_probability(&self, qbit: usize) -> Result<F, StateErr>;
 
 	/// Get merginal probability for measured values
-	fn get_marginal_probability(&self, qbits: &[usize]) -> F;
+	fn get_marginal_probability(&self, qbits: &[usize]) -> Result<F, StateErr>;
 }
 
 pub trait StateMut<F>: StateRef<F> {
@@ -92,25 +93,26 @@ where
 		}
 	}
 
-	fn get_zero_probability(&self, qbit: usize) -> f64 {
+	fn get_zero_probability(&self, qbit: usize) -> Result<f64, StateErr> {
 		if qbit >= self.qubit_count() {
-			panic!("Error: get_zero_probability; index of target qubit must be smaller than qubit_count");
+			return Err(StateErr::InvalidQubitCount(
+				"index of target qubit must be smaller than qubit_count",
+			));
 		}
 		unsafe {
-			qulacs::M0_prob(
+			Ok(qulacs::M0_prob(
 				qbit as u32,
 				self.as_ref().as_ptr() as *const CTYPE,
 				self.as_ref().len() as u64,
-			)
+			))
 		}
 	}
 
-	// panic-ing function
-	fn get_marginal_probability(&self, qbits: &[usize]) -> f64 {
+	fn get_marginal_probability(&self, qbits: &[usize]) -> Result<f64, StateErr> {
 		if qbits.len() != self.qubit_count() {
-			panic!(
-				"Error: get_marginal_probability; the length of qbits must be equal to qubit_count"
-			);
+			return Err(StateErr::InvalidQubitCount(
+				"The length of qbits must be equal to qubit_count",
+			));
 		}
 		let mut target_index = vec![];
 		let mut target_value = vec![];
@@ -123,13 +125,13 @@ where
 		}
 
 		unsafe {
-			qulacs::marginal_prob(
+			Ok(qulacs::marginal_prob(
 				target_index.as_ptr() as *const u32,
 				target_value.as_ptr() as *const u32,
 				target_index.len() as u32,
 				self.as_ref().as_ptr() as *const CTYPE,
 				self.as_ref().len() as u64,
-			)
+			))
 		}
 	}
 
@@ -292,6 +294,19 @@ pub trait GeneralStateRef {}
 
 pub trait GeneralStateMut {}
 
+#[derive(Debug)]
+pub enum StateErr {
+	InvalidQubitCount(&'static str),
+}
+
+impl fmt::Display for StateErr {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		match self {
+			StateErr::InvalidQubitCount(msg) => write!(f, "Invalid qubit count: {}", msg),
+		}
+	}
+}
+
 #[cfg(test)]
 pub mod state_tests {
 	use super::{StateMut, StateRef};
@@ -342,7 +357,11 @@ pub mod state_tests {
 
 		let state = [seed_comp(), seed_comp(), seed_comp(), seed_comp()];
 		let probs: Vec<f64> = state.iter().map(|e| e.norm_sqr()).collect();
-		assert_near!(state.get_zero_probability(0), probs[0] + probs[2], EPS);
+		assert_near!(
+			state.get_zero_probability(0).unwrap(),
+			probs[0] + probs[2],
+			EPS
+		);
 
 		let tests = [
 			([0, 0], probs[0]),
@@ -357,7 +376,7 @@ pub mod state_tests {
 		];
 
 		for (i, prob) in tests {
-			assert_near!(state.get_marginal_probability(&i), prob, EPS);
+			assert_near!(state.get_marginal_probability(&i).unwrap(), prob, EPS);
 		}
 	}
 

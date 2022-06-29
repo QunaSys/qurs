@@ -181,9 +181,14 @@ pub fn rz_gate(target_qubit_index: u32, angle: f64, state: &mut [Complex<f64>]) 
 }
 
 ///Compute the inner product of quantum states.
-pub fn inner_product(state_bra: &[Complex<f64>], state_ket: &[Complex<f64>]) -> Complex<f64> {
+pub fn inner_product(
+	state_bra: &[Complex<f64>],
+	state_ket: &[Complex<f64>],
+) -> Result<Complex<f64>, StateErr> {
 	if state_bra.len() != state_ket.len() {
-		panic!("Error: inner_product; Invalid qubit count");
+		return Err(StateErr::InvalidQubitCount(
+			"two states for inner_product must have consistent length",
+		));
 	}
 	unsafe {
 		let CTYPE { re, im } = qulacs::state_inner_product(
@@ -191,7 +196,7 @@ pub fn inner_product(state_bra: &[Complex<f64>], state_ket: &[Complex<f64>]) -> 
 			state_ket.as_ptr() as *const CTYPE,
 			state_bra.len() as u64,
 		);
-		Complex::new(re, im)
+		Ok(Complex::new(re, im))
 	}
 }
 
@@ -215,12 +220,14 @@ where
 }
 
 ///Permutate qubits from state
-pub fn permutate_qubit<T>(state: T, qubit_order: &[u32]) -> T
+pub fn permutate_qubit<T>(state: T, qubit_order: &[u32]) -> Result<T, StateErr>
 where
 	T: StateRef<f64> + AsRef<[Complex<f64>]> + AsMut<[Complex<f64>]> + Clone,
 {
 	if state.qubit_count() != qubit_order.len() {
-		panic!("Error: permutate_qubit; Invalid qubit count");
+		return Err(StateErr::InvalidQubitCount(
+			"qubit_order.len() must be equal to state.qubit_count()",
+		));
 	}
 	let mut result = state.clone();
 	unsafe {
@@ -232,16 +239,20 @@ where
 			state.as_ref().len() as u64,
 		)
 	}
-	result
+	Ok(result)
 }
 
 ///Drop qubits from state
-pub fn drop_qubit<T>(state: &T, target: &[u32], projection: &[u32]) -> StateVec<f64>
+pub fn drop_qubit<T>(
+	state: &T,
+	target: &[u32],
+	projection: &[u32],
+) -> Result<StateVec<f64>, StateErr>
 where
 	T: StateRef<f64> + AsRef<[Complex<f64>]>,
 {
 	if state.qubit_count() <= target.len() || target.len() != projection.len() {
-		panic!("Error: drop_qubit; Invalid qubit count");
+		return Err(StateErr::InvalidQubitCount(""));
 	}
 	let qubit_count = state.qubit_count() - target.len();
 	let mut qs = StateVec::new(qubit_count);
@@ -255,7 +266,7 @@ where
 			state.as_ref().len() as u64,
 		);
 	}
-	qs
+	Ok(qs)
 }
 
 ///Get expectation value
@@ -289,7 +300,7 @@ fn test_lib() {
 	x_gate(1, &mut state);
 	assert_eq!(state, [zero(), zero(), one(), zero()]);
 
-	assert_eq!(inner_product(&state, &state), one());
+	assert_eq!(inner_product(&state, &state).unwrap(), one());
 
 	let state = [one(), zero()];
 	assert_eq!(
@@ -299,7 +310,7 @@ fn test_lib() {
 
 	let mut state = [zero(); 8];
 	state.set_haar_random_state();
-	let permutated_state = permutate_qubit(state, &[1, 0, 2]);
+	let permutated_state = permutate_qubit(state, &[1, 0, 2]).unwrap();
 	let corr = [0, 2, 1, 3, 4, 6, 5, 7];
 	for i in 0..state.as_ref().len() {
 		assert_eq!(permutated_state.as_ref()[i].re, state[corr[i]].re);
@@ -308,7 +319,7 @@ fn test_lib() {
 
 	let mut state = [zero(); 16];
 	state.set_haar_random_state();
-	let dropped_state = drop_qubit(&state, &[2, 0], &[0, 1]);
+	let dropped_state = drop_qubit(&state, &[2, 0], &[0, 1]).unwrap();
 	assert_eq!(dropped_state.as_ref().len(), 4);
 	let corr = [1, 3, 9, 11];
 
