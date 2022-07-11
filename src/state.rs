@@ -99,9 +99,7 @@ where
 
 	fn get_zero_probability(&self, qbit: usize) -> Result<f64, StateErr> {
 		if qbit >= self.qubit_count() {
-			return Err(StateErr::InvalidQubitCount(
-				"index of target qubit must be smaller than qubit_count",
-			));
+			return Err(StateErr::InvalidTargetQubitIndex(qbit));
 		}
 		unsafe {
 			Ok(qulacs::M0_prob(
@@ -117,8 +115,11 @@ where
 		sorted_target_qubit_index_list: &[u32],
 		measured_value_list: &[u32],
 	) -> Result<f64, StateErr> {
+		//TODO: improve error handling
 		if sorted_target_qubit_index_list.len() != measured_value_list.len() {
-			return Err(StateErr::InvalidQubitCount(""));
+			return Err(StateErr::InvalidTargetList(
+				sorted_target_qubit_index_list.to_vec(),
+			));
 		}
 		unsafe {
 			Ok(qulacs::marginal_prob(
@@ -161,6 +162,7 @@ where
 			);
 		}
 	}
+
 	fn set_computational_basis(&mut self, comp_basis: usize) {
 		unsafe {
 			qulacs::initialize_quantum_state(
@@ -292,13 +294,23 @@ pub trait GeneralStateMut {}
 
 #[derive(Debug)]
 pub enum StateErr {
-	InvalidQubitCount(&'static str),
+	InconsistentStateLength(usize, usize),
+	InvalidTargetQubitIndex(usize),
+	InvalidTargetList(Vec<u32>),
 }
 
 impl fmt::Display for StateErr {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		match self {
-			StateErr::InvalidQubitCount(msg) => write!(f, "Invalid qubit count: {}", msg),
+			StateErr::InconsistentStateLength(l, r) => {
+				write!(f, "Inconsistent state length: left state has length of {l}, but right state has {r}")
+			}
+			StateErr::InvalidTargetQubitIndex(i) => {
+				write!(f, "Invalid target qubit index: target qubit index must be smaller than qubit count, but {i} was supplied")
+			}
+			StateErr::InvalidTargetList(list) => {
+				write!(f, "Invalid target list: {:?}", list)
+			}
 		}
 	}
 }

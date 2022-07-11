@@ -189,8 +189,9 @@ pub fn inner_product(
 	state_ket: &[Complex<f64>],
 ) -> Result<Complex<f64>, StateErr> {
 	if state_bra.len() != state_ket.len() {
-		return Err(StateErr::InvalidQubitCount(
-			"two states for inner_product must have consistent length",
+		return Err(StateErr::InconsistentStateLength(
+			state_bra.len(),
+			state_ket.len(),
 		));
 	}
 	unsafe {
@@ -228,9 +229,7 @@ where
 	T: StateRef<f64> + AsRef<[Complex<f64>]> + AsMut<[Complex<f64>]> + Clone,
 {
 	if state.qubit_count() != qubit_order.len() {
-		return Err(StateErr::InvalidQubitCount(
-			"qubit_order.len() must be equal to state.qubit_count()",
-		));
+		return Err(StateErr::InvalidTargetList(qubit_order.to_vec()));
 	}
 	let mut result = state.clone();
 	unsafe {
@@ -255,7 +254,7 @@ where
 	T: StateRef<f64> + AsRef<[Complex<f64>]>,
 {
 	if state.qubit_count() <= target.len() || target.len() != projection.len() {
-		return Err(StateErr::InvalidQubitCount(""));
+		return Err(StateErr::InvalidTargetList(target.to_vec()));
 	}
 	let qubit_count = state.qubit_count() - target.len();
 	let mut qs = StateVec::new(qubit_count);
