@@ -291,6 +291,27 @@ where
 	}
 }
 
+///Get expectation value
+pub fn multi_qubit_pauli_rotation_gate_partial_list<T>(
+	target_qubit_index_list: &[u32],
+	pauli_operator_type_list: &[u32],
+	angle: f64,
+	state: &mut T,
+) where
+	T: StateRef<f64> + AsMut<[Complex<f64>]>,
+{
+	unsafe {
+		qulacs::multi_qubit_Pauli_rotation_gate_partial_list(
+			target_qubit_index_list.as_ptr() as *const u32,
+			pauli_operator_type_list.as_ptr() as *const u32,
+			target_qubit_index_list.len() as u32,
+			angle,
+			state.as_mut().as_ptr() as *mut CTYPE,
+			state.as_mut().len() as u64,
+		)
+	}
+}
+
 #[test]
 fn test_lib() {
 	use num::{One, Zero};
