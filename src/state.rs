@@ -25,7 +25,11 @@ pub trait StateRef<F> {
 	fn get_zero_probability(&self, qbit: usize) -> Result<F, StateErr>;
 
 	/// Get merginal probability for measured values
-	fn get_marginal_probability(&self, qbits: &[usize]) -> Result<F, StateErr>;
+	fn get_marginal_probability(
+		&self,
+		sorted_target_qubit_index_list: &[u32],
+		measured_value_list: &[u32],
+	) -> Result<F, StateErr>;
 }
 
 pub trait StateMut<F>: StateRef<F> {
@@ -108,27 +112,19 @@ where
 		}
 	}
 
-	fn get_marginal_probability(&self, qbits: &[usize]) -> Result<f64, StateErr> {
-		if qbits.len() != self.qubit_count() {
-			return Err(StateErr::InvalidQubitCount(
-				"The length of qbits must be equal to qubit_count",
-			));
+	fn get_marginal_probability(
+		&self,
+		sorted_target_qubit_index_list: &[u32],
+		measured_value_list: &[u32],
+	) -> Result<f64, StateErr> {
+		if sorted_target_qubit_index_list.len() != measured_value_list.len() {
+			return Err(StateErr::InvalidQubitCount(""));
 		}
-		let mut target_index = vec![];
-		let mut target_value = vec![];
-
-		for (i, val) in qbits.iter().enumerate() {
-			if *val == 0 || *val == 1 {
-				target_index.push(i as u32);
-				target_value.push(*val as u32);
-			}
-		}
-
 		unsafe {
 			Ok(qulacs::marginal_prob(
-				target_index.as_ptr() as *const u32,
-				target_value.as_ptr() as *const u32,
-				target_index.len() as u32,
+				sorted_target_qubit_index_list.as_ptr() as *const u32,
+				measured_value_list.as_ptr() as *const u32,
+				measured_value_list.len() as u32,
 				self.as_ref().as_ptr() as *const CTYPE,
 				self.as_ref().len() as u64,
 			))
@@ -364,19 +360,19 @@ pub mod state_tests {
 		);
 
 		let tests = [
-			([0, 0], probs[0]),
-			([1, 0], probs[1]),
-			([0, 1], probs[2]),
-			([1, 1], probs[3]),
-			([0, 2], probs[0] + probs[2]),
-			([1, 2], probs[1] + probs[3]),
-			([2, 0], probs[0] + probs[1]),
-			([2, 1], probs[2] + probs[3]),
-			([2, 2], probs[0] + probs[1] + probs[2] + probs[3]),
+			(vec![0, 1], vec![0, 0], probs[0]),
+			(vec![0, 1], vec![1, 0], probs[1]),
+			(vec![0, 1], vec![0, 1], probs[2]),
+			(vec![0, 1], vec![1, 1], probs[3]),
+			(vec![0], vec![0], probs[0] + probs[2]),
+			(vec![0], vec![1], probs[1] + probs[3]),
+			(vec![1], vec![0], probs[0] + probs[1]),
+			(vec![1], vec![1], probs[2] + probs[3]),
+			(vec![], vec![], probs[0] + probs[1] + probs[2] + probs[3]),
 		];
 
-		for (i, prob) in tests {
-			assert_near!(state.get_marginal_probability(&i).unwrap(), prob, EPS);
+		for (i, j, prob) in tests {
+			assert_near!(state.get_marginal_probability(&i, &j).unwrap(), prob, EPS);
 		}
 	}
 
