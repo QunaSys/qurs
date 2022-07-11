@@ -147,36 +147,39 @@ pub fn swap_gate(target_qubit_index_0: u32, target_qubit_index_1: u32, state: &m
 	);
 }
 
-/// Apply a X rotation gate by angle to the quantum state.
+/// Apply a X rotation gate by angle to the quantum state. The definition is
+/// given as exp(-i(θ/2)X) where θ is the angle.
 /// * `target_qubit_index` index of the qubit
 /// * `angle` angle of the rotation
 /// * `state` quantum state
 pub fn rx_gate(target_qubit_index: u32, angle: f64, state: &mut [Complex<f64>]) {
 	wrap(
 		state,
-		Gate::Rotation(target_qubit_index, angle, qulacs::RX_gate),
+		Gate::Rotation(target_qubit_index, -angle, qulacs::RX_gate),
 	);
 }
 
-/// Apply a Y rotation gate by angle to the quantum state.
+/// Apply a Y rotation gate by angle to the quantum state. The definition is
+/// given as exp(-i(θ/2)Y) where θ is the angle.
 /// * `target_qubit_index` index of the qubit
 /// * `angle` angle of the rotation
 /// * `state` quantum state
 pub fn ry_gate(target_qubit_index: u32, angle: f64, state: &mut [Complex<f64>]) {
 	wrap(
 		state,
-		Gate::Rotation(target_qubit_index, angle, qulacs::RY_gate),
+		Gate::Rotation(target_qubit_index, -angle, qulacs::RY_gate),
 	);
 }
 
-/// Apply a Z rotation gate by angle to the quantum state.
+/// Apply a Z rotation gate by angle to the quantum state. The definition is
+/// given as exp(-i(θ/2)Z) where θ is the angle.
 /// * `target_qubit_index` index of the qubit
 /// * `angle` angle of the rotation
 /// * `state` quantum state
 pub fn rz_gate(target_qubit_index: u32, angle: f64, state: &mut [Complex<f64>]) {
 	wrap(
 		state,
-		Gate::Rotation(target_qubit_index, angle, qulacs::RZ_gate),
+		Gate::Rotation(target_qubit_index, -angle, qulacs::RZ_gate),
 	);
 }
 
