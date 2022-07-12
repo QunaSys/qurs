@@ -66,15 +66,12 @@ pub trait PureStateMut<F>: PureStateRef<F> + StateMut<F> {}
 /// slice-like types
 ///
 /// # Safety
-/// the slice has more than 2^(len()) elements
+/// the slice may have more than 2^(qubit_count()) elements
 unsafe trait PureStateImpl<F>: AsRef<[Complex<F>]> {
 	fn qubit_count(&self) -> usize;
 }
 
-impl<T> StateRef<f64> for T
-where
-	T: PureStateImpl<f64>,
-{
+impl<T: PureStateImpl<f64>> StateRef<f64> for T {
 	fn qubit_count(&self) -> usize {
 		self.qubit_count()
 	}
