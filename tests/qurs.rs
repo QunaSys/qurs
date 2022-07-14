@@ -29,6 +29,8 @@ fn generate_state() {
 #[test]
 fn init_state() {
 	const N: usize = 5;
+
+	//With array
 	let mut state = [Complex::zero(); 2usize.pow(N as u32)];
 	state.set_zero_state();
 	// initialize to |00101>

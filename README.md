@@ -22,23 +22,30 @@ cargo build
 use num::{Complex, One, Zero};
 use qurs::{self, StateMut, StateRef, StateVec};
 fn main() {
-	//Using array
-	let mut state = [
-		Complex::one(),
-		Complex::zero(),
-		Complex::zero(),
-		Complex::zero(),
-	];
-	state.set_haar_random_state();
-	state.get_marginal_probability(&[0, 0]);
-	qurs::x_gate(1, &mut state);
-	qurs::inner_product(&state, &state);
+	const N: usize = 5;
 
-	//Using StateVec
-	let mut state: StateVec<f64> = StateVec::new(2);
+	//With array
+	let mut state = [Complex::zero(); 2usize.pow(N as u32)];
+	assert_eq!(state.qubit_count(), N);
+	// initialize to |00000>
+	state.set_zero_state();
+	// initialize to |00101>
+	state.set_computational_basis(0b00101);
+	// initialize with a random quantum state
 	state.set_haar_random_state();
-	state.get_marginal_probability(&[0, 0]);
-	qurs::x_gate(1, state.as_mut());
-	qurs::inner_product(state.as_ref(), state.as_ref());
+	// Apply x_gate for state
+	x_gate(0, &mut state);
+	// Rotate PI/2 with respect to Y
+	let angle = PI / 2.0;
+	ry_gate(0, angle, &mut state);
+
+	//With StateVec
+	let mut state = StateVec::new(N);
+	assert_eq!(state.qubit_count(), N);
+	state.set_zero_state();
+	state.set_computational_basis(0b00101);
+	state.set_haar_random_state();
+	x_gate(0, state.as_mut());
+	ry_gate(0, angle, state.as_mut());
 }
 ```
