@@ -305,7 +305,7 @@ pub fn multi_qubit_pauli_rotation_gate_partial_list<T>(
 			target_qubit_index_list.as_ptr() as *const u32,
 			pauli_operator_type_list.as_ptr() as *const u32,
 			target_qubit_index_list.len() as u32,
-			angle,
+			-angle,
 			state.as_mut().as_ptr() as *mut CTYPE,
 			state.as_mut().len() as u64,
 		)

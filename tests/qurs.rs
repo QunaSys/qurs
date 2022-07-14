@@ -1,7 +1,6 @@
-use std::f64::consts::PI;
-
 use num::{Complex, One, Zero};
 use qurs::{self, inner_product, ry_gate, x_gate, StateMut, StateRef, StateVec};
+use std::f64::consts::PI;
 
 #[test]
 fn generate_state() {
