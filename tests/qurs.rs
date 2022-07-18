@@ -1,5 +1,7 @@
 use num::{Complex, One, Zero};
-use qurs::{self, inner_product, ry_gate, x_gate, StateMut, StateRef, StateVec};
+use qurs::gate::{ry_gate, x_gate};
+use qurs::prelude::*;
+use qurs::{self, inner_product, StateVec};
 use std::f64::consts::PI;
 
 #[test]

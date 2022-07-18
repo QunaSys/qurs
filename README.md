@@ -19,8 +19,12 @@ cargo build
 # Example
 
 ```rust
-use num::{Complex, One, Zero};
-use qurs::{self, StateMut, StateRef, StateVec};
+use num::{Complex, Zero};
+use qurs::gate::{ry_gate, x_gate};
+use qurs::prelude::*;
+use qurs::{self, StateVec};
+use std::f64::consts::PI;
+
 fn main() {
 	const N: usize = 5;
 

@@ -1,14 +1,10 @@
 use super::binding::qulacs::{self, CTYPE};
 use num::{Complex, One, Zero};
 use ordered_float::OrderedFloat;
-use rand;
 use std::fmt;
 use superslice::Ext;
 
 pub trait StateRef<F> {
-	// TODO: Place analyzing operations performed on both PureStateRef and
-	// DenseStateRef
-
 	///Get qubit count
 	fn qubit_count(&self) -> usize;
 
@@ -33,9 +29,6 @@ pub trait StateRef<F> {
 }
 
 pub trait StateMut<F>: StateRef<F> {
-	// TODO: Place updating operations performed on both PureStateRef and
-	// DenseStateRef
-
 	///Set state to |0>
 	fn set_zero_state(&mut self);
 
@@ -112,7 +105,6 @@ impl<T: PureStateImpl<f64>> StateRef<f64> for T {
 		sorted_target_qubit_index_list: &[u32],
 		measured_value_list: &[u32],
 	) -> Result<f64, StateErr> {
-		//TODO: improve error handling
 		if sorted_target_qubit_index_list.len() != measured_value_list.len() {
 			return Err(StateErr::InvalidTargetList(
 				sorted_target_qubit_index_list.to_vec(),
@@ -247,7 +239,7 @@ macro_rules! impl_array_state {
 		impl_array_state!(@impl, $sum + $n0, $($n),+);
 	};
 	($($n:expr),+) => {
-		impl_array_state!(@impl, 1usize, $($n),+);
+		impl_array_state!(@impl, 0usize, $($n),+);
 	};
 }
 
@@ -283,13 +275,11 @@ impl<F: num::Num> AsMut<[Complex<F>]> for StateVec<F> {
 	}
 }
 
-//TODO: struct GpuPureState();
-
 pub trait GeneralStateRef {}
 
 pub trait GeneralStateMut {}
 
-#[derive(Debug)]
+#[non_exhaustive]
 pub enum StateErr {
 	InconsistentStateLength(usize, usize),
 	InvalidTargetQubitIndex(usize),
@@ -312,6 +302,12 @@ impl fmt::Display for StateErr {
 	}
 }
 
+impl fmt::Debug for StateErr {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		<Self as fmt::Display>::fmt(self, f)
+	}
+}
+
 #[cfg(test)]
 pub mod state_tests {
 	use super::{StateMut, StateRef};
@@ -328,6 +324,7 @@ pub mod state_tests {
 
 	#[test]
 	fn test_impl() {
+		assert_eq!([seed_comp(); 1].qubit_count(), 0);
 		assert_eq!([seed_comp(); 2].qubit_count(), 1);
 		assert_eq!([seed_comp(); 16].qubit_count(), 4);
 		assert_eq!([seed_comp(); 128].qubit_count(), 7);
