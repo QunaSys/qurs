@@ -7,6 +7,10 @@ edition = "2018"
 
 [dependencies]
 num = "0.4.0"
+rand = "0.8.5"
+superslice="1.0.0"
+ordered-float="3.0.0"
+[dev-dependencies]
 [build-dependencies]
-bindgen = "0.59.2"
+bindgen = "0.60.1"
 cc = { version = "1.0", features = ["parallel"] }

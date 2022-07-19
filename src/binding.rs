@@ -5,10 +5,10 @@ pub use num::complex::Complex;
 #[allow(non_camel_case_types)]
 #[allow(improper_ctypes)]
 #[allow(unused)]
-mod qulacs {
+pub mod qulacs {
 	include!(concat!(env!("OUT_DIR"), "/qulacs.rs"));
 }
-pub use qulacs::*;
+pub use qulacs::CTYPE;
 
 pub enum Gate {
 	Single(u32, unsafe extern "C" fn(u32, *mut CTYPE, u64)),
