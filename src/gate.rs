@@ -1,5 +1,5 @@
-use crate::binding::{qulacs, wrap, Gate};
-use num::Complex;
+use crate::binding::{qulacs, wrap, ControlValue, Gate};
+use num::{Complex, One, Zero};
 
 /// Apply the Pauli X gate to the quantum state.
 /// * `target_qubit_index` index of the qubit
@@ -145,6 +145,71 @@ pub fn cnot_gate(control_qubit_index: u32, target_qubit_index: u32, state: &mut 
 			control_qubit_index,
 			target_qubit_index,
 			gate: qulacs::CNOT_gate,
+		},
+	);
+}
+
+/// Apply the CCNOT(a.k.a Toffoli) gate to the quantum state.
+pub fn ccnot_gate(
+	control_qubit_index1: u32,
+	control_qubit_index2: u32,
+	target_qubit_index: u32,
+	state: &mut [Complex<f64>],
+) {
+	multi_control_u_gate(
+		&[control_qubit_index1, control_qubit_index2],
+		target_qubit_index,
+		&[
+			Complex::zero(),
+			Complex::one(),
+			Complex::one(),
+			Complex::zero(),
+		],
+		state,
+	);
+}
+
+/// Apply the CCZ gate to the quantum state.
+pub fn ccz_gate(
+	control_qubit_index1: u32,
+	control_qubit_index2: u32,
+	target_qubit_index: u32,
+	state: &mut [Complex<f64>],
+) {
+	multi_control_u_gate(
+		&[control_qubit_index1, control_qubit_index2],
+		target_qubit_index,
+		&[
+			Complex::one(),
+			Complex::zero(),
+			Complex::zero(),
+			-Complex::one(),
+		],
+		state,
+	);
+}
+
+/// Apply arbitrary multi-controlled gate represented as `matrix`.
+/// * `control_qubit_indexes` if these qubits are `ControlValue::One` then apply `matrix`
+/// * `target_qubit_index` the target applied `matrix`
+/// * `state` quantum state
+fn multi_control_u_gate(
+	control_qubit_indexes: &[u32],
+	target_qubit_index: u32,
+	matrix: &[Complex<f64>; 4],
+	state: &mut [Complex<f64>],
+) {
+	let controls = control_qubit_indexes
+		.iter()
+		.map(|x| -> (u32, ControlValue) { (*x, ControlValue::One) })
+		.collect::<Vec<_>>();
+	wrap(
+		state,
+		Gate::MultiControlledSingleTarget {
+			controls: controls.as_slice(),
+			target_index: target_qubit_index,
+			matrix,
+			gate: qulacs::multi_qubit_control_single_qubit_dense_matrix_gate,
 		},
 	);
 }
