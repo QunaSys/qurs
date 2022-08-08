@@ -5,77 +5,86 @@ use num::Complex;
 /// * `target_qubit_index` index of the qubit
 /// * `state` quantum state
 pub fn x_gate(target_qubit_index: u32, state: &mut [Complex<f64>]) {
-	wrap(state, Gate::Single(target_qubit_index, qulacs::X_gate));
+	wrap(state, Gate::single_of(target_qubit_index, qulacs::X_gate));
 }
 
 /// Apply the Pauli Y gate to the quantum state.
 /// * `target_qubit_index` index of the qubit
 /// * `state` quantum state
 pub fn y_gate(target_qubit_index: u32, state: &mut [Complex<f64>]) {
-	wrap(state, Gate::Single(target_qubit_index, qulacs::Y_gate));
+	wrap(state, Gate::single_of(target_qubit_index, qulacs::Y_gate));
 }
 
 /// Apply the Pauli Y gate to the quantum state.
 /// * `target_qubit_index` index of the qubit
 /// * `state` quantum state
 pub fn z_gate(target_qubit_index: u32, state: &mut [Complex<f64>]) {
-	wrap(state, Gate::Single(target_qubit_index, qulacs::Z_gate));
+	wrap(state, Gate::single_of(target_qubit_index, qulacs::Z_gate));
 }
 
 /// Apply the Hadamard gate to the quantum state.
 /// * `target_qubit_index` index of the qubit
 /// * `state` quantum state
 pub fn h_gate(target_qubit_index: u32, state: &mut [Complex<f64>]) {
-	wrap(state, Gate::Single(target_qubit_index, qulacs::H_gate));
+	wrap(state, Gate::single_of(target_qubit_index, qulacs::H_gate));
 }
 
 /// Project the quantum state to the 0 state.
 /// * `target_qubit_index` index of the qubit
 /// * `state` quantum state
 pub fn p0_gate(target_qubit_index: u32, state: &mut [Complex<f64>]) {
-	wrap(state, Gate::Single(target_qubit_index, qulacs::P0_gate));
+	wrap(state, Gate::single_of(target_qubit_index, qulacs::P0_gate));
 }
 
 /// Project the quantum state to the 1 state.
 /// * `target_qubit_index` index of the qubit
 /// * `state` quantum state
 pub fn p1_gate(target_qubit_index: u32, state: &mut [Complex<f64>]) {
-	wrap(state, Gate::Single(target_qubit_index, qulacs::P1_gate));
+	wrap(state, Gate::single_of(target_qubit_index, qulacs::P1_gate));
 }
 
 /// Apply S gate to the quantum state.
 /// * `target_qubit_index` index of the qubit
 /// * `state` quantum state
 pub fn s_gate(target_qubit_index: u32, state: &mut [Complex<f64>]) {
-	wrap(state, Gate::Single(target_qubit_index, qulacs::S_gate));
+	wrap(state, Gate::single_of(target_qubit_index, qulacs::S_gate));
 }
 
 /// Apply S^dag gate to the quantum state.
 /// * `target_qubit_index` index of the qubit
 /// * `state` quantum state
 pub fn sdag_gate(target_qubit_index: u32, state: &mut [Complex<f64>]) {
-	wrap(state, Gate::Single(target_qubit_index, qulacs::Sdag_gate));
+	wrap(
+		state,
+		Gate::single_of(target_qubit_index, qulacs::Sdag_gate),
+	);
 }
 
 /// Apply T gate to the quantum state.
 /// * `target_qubit_index` index of the qubit
 /// * `state` quantum state
 pub fn t_gate(target_qubit_index: u32, state: &mut [Complex<f64>]) {
-	wrap(state, Gate::Single(target_qubit_index, qulacs::T_gate));
+	wrap(state, Gate::single_of(target_qubit_index, qulacs::T_gate));
 }
 
 /// Apply T^dag gate to the quantum state.
 /// * `target_qubit_index` index of the qubit
 /// * `state` quantum state
 pub fn tdag_gate(target_qubit_index: u32, state: &mut [Complex<f64>]) {
-	wrap(state, Gate::Single(target_qubit_index, qulacs::Tdag_gate));
+	wrap(
+		state,
+		Gate::single_of(target_qubit_index, qulacs::Tdag_gate),
+	);
 }
 
 /// Apply the square root of the X gate to the quantum state.
 /// * `target_qubit_index` index of the qubit
 /// * `state` quantum state
 pub fn sqrtx_gate(target_qubit_index: u32, state: &mut [Complex<f64>]) {
-	wrap(state, Gate::Single(target_qubit_index, qulacs::sqrtX_gate));
+	wrap(
+		state,
+		Gate::single_of(target_qubit_index, qulacs::sqrtX_gate),
+	);
 }
 
 /// Apply hermitian conjugate of the square root of the X gate to the quantum
@@ -85,7 +94,7 @@ pub fn sqrtx_gate(target_qubit_index: u32, state: &mut [Complex<f64>]) {
 pub fn sqrtxdag_gate(target_qubit_index: u32, state: &mut [Complex<f64>]) {
 	wrap(
 		state,
-		Gate::Single(target_qubit_index, qulacs::sqrtXdag_gate),
+		Gate::single_of(target_qubit_index, qulacs::sqrtXdag_gate),
 	);
 }
 
@@ -93,7 +102,10 @@ pub fn sqrtxdag_gate(target_qubit_index: u32, state: &mut [Complex<f64>]) {
 /// * `target_qubit_index` index of the qubit
 /// * `state` quantum state
 pub fn sqrty_gate(target_qubit_index: u32, state: &mut [Complex<f64>]) {
-	wrap(state, Gate::Single(target_qubit_index, qulacs::sqrtY_gate));
+	wrap(
+		state,
+		Gate::single_of(target_qubit_index, qulacs::sqrtY_gate),
+	);
 }
 
 /// Apply hermitian conjugate of the square root of the Y gate to the quantum
@@ -103,7 +115,7 @@ pub fn sqrty_gate(target_qubit_index: u32, state: &mut [Complex<f64>]) {
 pub fn sqrtydag_gate(target_qubit_index: u32, state: &mut [Complex<f64>]) {
 	wrap(
 		state,
-		Gate::Single(target_qubit_index, qulacs::sqrtYdag_gate),
+		Gate::single_of(target_qubit_index, qulacs::sqrtYdag_gate),
 	);
 }
 
@@ -114,7 +126,11 @@ pub fn sqrtydag_gate(target_qubit_index: u32, state: &mut [Complex<f64>]) {
 pub fn cz_gate(control_qubit_index: u32, target_qubit_index: u32, state: &mut [Complex<f64>]) {
 	wrap(
 		state,
-		Gate::Controlled(control_qubit_index, target_qubit_index, qulacs::CZ_gate),
+		Gate::Controlled {
+			control_qubit_index: control_qubit_index,
+			target_qubit_index: target_qubit_index,
+			gate: qulacs::CZ_gate,
+		},
 	);
 }
 
@@ -125,7 +141,11 @@ pub fn cz_gate(control_qubit_index: u32, target_qubit_index: u32, state: &mut [C
 pub fn cnot_gate(control_qubit_index: u32, target_qubit_index: u32, state: &mut [Complex<f64>]) {
 	wrap(
 		state,
-		Gate::Controlled(control_qubit_index, target_qubit_index, qulacs::CNOT_gate),
+		Gate::Controlled {
+			control_qubit_index: control_qubit_index,
+			target_qubit_index: target_qubit_index,
+			gate: qulacs::CNOT_gate,
+		},
 	);
 }
 
@@ -136,11 +156,11 @@ pub fn cnot_gate(control_qubit_index: u32, target_qubit_index: u32, state: &mut 
 pub fn swap_gate(target_qubit_index_0: u32, target_qubit_index_1: u32, state: &mut [Complex<f64>]) {
 	wrap(
 		state,
-		Gate::Controlled(
-			target_qubit_index_0,
-			target_qubit_index_1,
-			qulacs::SWAP_gate,
-		),
+		Gate::Controlled {
+			control_qubit_index: target_qubit_index_0,
+			target_qubit_index: target_qubit_index_1,
+			gate: qulacs::SWAP_gate,
+		},
 	);
 }
 
@@ -152,7 +172,7 @@ pub fn swap_gate(target_qubit_index_0: u32, target_qubit_index_1: u32, state: &m
 pub fn rx_gate(target_qubit_index: u32, angle: f64, state: &mut [Complex<f64>]) {
 	wrap(
 		state,
-		Gate::Rotation(target_qubit_index, -angle, qulacs::RX_gate),
+		Gate::rotation_of(target_qubit_index, -angle, qulacs::RX_gate),
 	);
 }
 
@@ -164,7 +184,7 @@ pub fn rx_gate(target_qubit_index: u32, angle: f64, state: &mut [Complex<f64>]) 
 pub fn ry_gate(target_qubit_index: u32, angle: f64, state: &mut [Complex<f64>]) {
 	wrap(
 		state,
-		Gate::Rotation(target_qubit_index, -angle, qulacs::RY_gate),
+		Gate::rotation_of(target_qubit_index, -angle, qulacs::RY_gate),
 	);
 }
 
@@ -176,6 +196,6 @@ pub fn ry_gate(target_qubit_index: u32, angle: f64, state: &mut [Complex<f64>]) 
 pub fn rz_gate(target_qubit_index: u32, angle: f64, state: &mut [Complex<f64>]) {
 	wrap(
 		state,
-		Gate::Rotation(target_qubit_index, -angle, qulacs::RZ_gate),
+		Gate::rotation_of(target_qubit_index, -angle, qulacs::RZ_gate),
 	);
 }
