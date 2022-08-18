@@ -18,9 +18,9 @@ jobs:
           toolchain: stable
           components: clippy
           override: true
-      - uses: actions-rs/clippy-check@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Clippy check
+        # `bindgen` generated code makes some errors so allow these lints for now.
+        run: cargo clippy -- -D warnings -A clippy::upper-case-acronyms -A clippy::derive-partial-eq-without-eq
 
   grcov:
     runs-on: ubuntu-latest
