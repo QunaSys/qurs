@@ -8,9 +8,19 @@ pub use num::complex::Complex;
 pub mod qulacs {
 	include!(concat!(env!("OUT_DIR"), "/qulacs.rs"));
 }
-pub use qulacs::CTYPE;
+pub use qulacs::{CTYPE, UINT};
 
-pub enum Gate {
+/// Value indicate to apply the gate in controlled gate.
+/// Note: Rust requires that we implement `Copy` trait to cast `ControlValue` into `u32`.
+#[derive(Clone, Copy)]
+pub enum ControlValue {
+	/// For now we don't use `Zero`.
+	#[allow(dead_code)]
+	Zero,
+	One,
+}
+
+pub enum Gate<'a> {
 	Single {
 		target_qubit_index: u32,
 		gate: unsafe extern "C" fn(u32, *mut CTYPE, u64),
@@ -19,6 +29,13 @@ pub enum Gate {
 		control_qubit_index: u32,
 		target_qubit_index: u32,
 		gate: unsafe extern "C" fn(u32, u32, *mut CTYPE, u64),
+	},
+	MultiControlledSingleTarget {
+		// (control_index, control_value)
+		controls: &'a [(u32, ControlValue)],
+		target_index: u32,
+		matrix: &'a [Complex<f64>; 4],
+		gate: unsafe extern "C" fn(*const u32, *const u32, u32, u32, *const CTYPE, *mut CTYPE, u64),
 	},
 	Rotation {
 		target_qubit_index: u32,
@@ -29,22 +46,22 @@ pub enum Gate {
 }
 
 /// Custom constructors.
-impl Gate {
-	pub fn single_of(
+impl Gate<'_> {
+	pub fn single_of<'a>(
 		target_qubit_index: u32,
 		gate: unsafe extern "C" fn(u32, *mut CTYPE, u64),
-	) -> Gate {
+	) -> Gate<'a> {
 		Gate::Single {
 			target_qubit_index,
 			gate,
 		}
 	}
 
-	pub fn rotation_of(
+	pub fn rotation_of<'a>(
 		target_qubit_index: u32,
 		angle: f64,
 		gate: unsafe extern "C" fn(u32, f64, *mut CTYPE, u64),
-	) -> Gate {
+	) -> Gate<'a> {
 		Gate::Rotation {
 			target_qubit_index,
 			angle,
@@ -70,6 +87,34 @@ pub fn wrap(state: &mut [Complex<f64>], gate: Gate) {
 				gate,
 			} => {
 				gate(control_qubit_index, target_qubit_index, state_ptr, dim);
+			}
+			Gate::MultiControlledSingleTarget {
+				controls,
+				target_index,
+				matrix,
+				gate,
+			} => {
+				let control_qubit_count = controls.len() as u32;
+
+				let mut control_qubit_index_list: Vec<u32> = Vec::new();
+				let mut control_value_list: Vec<u32> = Vec::new();
+				for c in controls.iter() {
+					control_qubit_index_list.push(c.0);
+					control_value_list.push(c.1 as u32);
+				}
+				let control_qubit_index_list_ptr = control_qubit_index_list.as_ptr() as *const UINT;
+				let control_value_list_ptr = control_value_list.as_ptr() as *const UINT;
+				let matrix_ptr = matrix.as_ptr() as *const CTYPE;
+
+				gate(
+					control_qubit_index_list_ptr,
+					control_value_list_ptr,
+					control_qubit_count,
+					target_index,
+					matrix_ptr,
+					state_ptr,
+					dim,
+				)
 			}
 			Gate::Rotation {
 				target_qubit_index,
