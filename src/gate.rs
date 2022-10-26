@@ -190,7 +190,8 @@ pub fn ccz_gate(
 }
 
 /// Apply arbitrary multi-controlled gate represented as `matrix`.
-/// * `control_qubit_indexes` if these qubits are `ControlValue::One` then apply `matrix`
+/// * `control_qubit_indexes` if these qubits are `ControlValue::One` then apply
+///   `matrix`
 /// * `target_qubit_index` the target applied `matrix`
 /// * `state` quantum state
 fn multi_control_u_gate(

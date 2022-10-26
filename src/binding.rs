@@ -11,7 +11,8 @@ pub mod qulacs {
 pub use qulacs::{CTYPE, UINT};
 
 /// Value indicate to apply the gate in controlled gate.
-/// Note: Rust requires that we implement `Copy` trait to cast `ControlValue` into `u32`.
+/// Note: Rust requires that we implement `Copy` trait to cast `ControlValue`
+/// into `u32`.
 #[derive(Clone, Copy)]
 pub enum ControlValue {
 	/// For now we don't use `Zero`.

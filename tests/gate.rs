@@ -17,7 +17,7 @@ fn test_ccnot_gate() {
 	let delta = 0.00001;
 	let expected = [0.5, 0.5, 0.75];
 
-	for i in 0..N {
+	(0..N).for_each(|i| {
 		assert!(
 			state.get_zero_probability(i).is_ok(),
 			"{}th zero_probability is null!",
@@ -31,5 +31,5 @@ fn test_ccnot_gate() {
 			expected[i],
 			delta
 		);
-	}
+	});
 }
