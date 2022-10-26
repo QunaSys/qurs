@@ -127,7 +127,7 @@ impl<T: PureStateImpl<f64>> StateRef<f64> for T {
 		let mut sum = 0.;
 		stacked_prob.push(OrderedFloat(0.));
 		for i in 0..self.as_ref().len() {
-			sum += Complex::norm(self.as_ref()[i]);
+			sum += Complex::norm_sqr(&self.as_ref()[i]);
 			stacked_prob.push(OrderedFloat(sum));
 		}
 		for _ in 0..sampling_count {
